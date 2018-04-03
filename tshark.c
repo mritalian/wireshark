@@ -1,76 +1,12 @@
 
-#define CAN_SET_CAPTURE_BUFFER_SIZE 1
-#define HAVE_ARPA_INET_H 1
-#define HAVE_ARPA_NAMESER_H 1
-#define HAVE_BPF_IMAGE 1
-#define HAVE_CXX11 1
-#define HAVE_DLFCN_H 1
 #define HAVE_FCNTL_H 1
-#define HAVE_FLOORL 1
-#define HAVE_GETIFADDRS 1
-#define HAVE_GETOPT_H 1
-#define HAVE_GETOPT_LONG 1
-#define HAVE_GRP_H 1
-#define HAVE_IFADDRS_H 1
-#define HAVE_INFLATEPRIME 1
-#define HAVE_INTTYPES_H 1
 #define HAVE_LIBPCAP 1
-#define HAVE_LIBZ 1
-#define HAVE_LINUX_IF_BONDING_H 1
-#define HAVE_LINUX_SOCKIOS_H 1
-#define HAVE_LRINT 1
-#define HAVE_MEMORY_H 1
-#define HAVE_MKDTEMP 1
-#define HAVE_MKSTEMPS 1
-#define HAVE_NETDB_H 1
-#define HAVE_NETINET_IN_H 1
-#define HAVE_NL80211 1
-#define HAVE_NL80211_CMD_SET_CHANNEL 1
-#define HAVE_NL80211_SPLIT_WIPHY_DUMP 1
-#define HAVE_NL80211_VHT_CAPABILITY 1
-#define HAVE_PCAP_BREAKLOOP 1
-#define HAVE_PCAP_CREATE 1
-#define HAVE_PCAP_DATALINK_NAME_TO_VAL 1
-#define HAVE_PCAP_DATALINK_VAL_TO_DESCRIPTION 1
-#define HAVE_PCAP_DATALINK_VAL_TO_NAME 1
-#define HAVE_PCAP_FINDALLDEVS 1
-#define HAVE_PCAP_FREECODE 1
-#define HAVE_PCAP_FREE_DATALINKS 1
-#define HAVE_PCAP_GET_SELECTABLE_FD 1
-#define HAVE_PCAP_LIB_VERSION 1
-#define HAVE_PCAP_LIST_DATALINKS 1
 #define HAVE_PCAP_OPEN_DEAD 1
-#define HAVE_PCAP_SET_DATALINK 1
-#define HAVE_PCAP_SET_TSTAMP_PRECISION 1
-#define HAVE_PCAP_SET_TSTAMP_TYPE 1
 #define HAVE_PLUGINS 1
-#define HAVE_PWD_H 1
-#define HAVE_SETRESGID 1
-#define HAVE_SETRESUID 1
-#define HAVE_SSE4_2 1
-#define HAVE_STDINT_H 1
-#define HAVE_STDLIB_H 1
-#define HAVE_STRINGS_H 1
-#define HAVE_STRING_H 1
-#define HAVE_STRPTIME 1
-#define HAVE_STRUCT_TM_TM_ZONE 1
-#define HAVE_SYSCONF 1
-#define HAVE_SYS_IOCTL_H 1
-#define HAVE_SYS_PARAM_H 1
-#define HAVE_SYS_SELECT_H 1
-#define HAVE_SYS_SOCKET_H 1
 #define HAVE_SYS_STAT_H 1
-#define HAVE_SYS_TIME_H 1
-#define HAVE_SYS_TYPES_H 1
-#define HAVE_SYS_UTSNAME_H 1
-#define HAVE_SYS_WAIT_H 1
-#define HAVE_TM_ZONE 1
 #define HAVE_UNISTD_H 1
-#define HAVE_ZLIB 1
-#define LT_OBJDIR ".libs/"
 #define PCAP_NG_DEFAULT 1
-#define STDC_HEADERS 1
-
+#define LOG_DOMAIN_CAPTURE "Capture"
 
 #include "file.h"
 
@@ -137,9 +73,8 @@
 #include <capchild/capture_session.h>
 #include <capchild/capture_sync.h>
 #include <capture_info.h>
-#include "log.h"
-#include <epan/funnel.h>
 
+#include <epan/funnel.h>
 #include <wsutil/str_util.h>
 #include <wsutil/utf8_entities.h>
 
@@ -162,10 +97,6 @@
 #define INVALID_CAPTURE 2
 #define INIT_FAILED 2
 
-/*
- * values 128..65535 are capture+dissect options, 65536 is used by
- * ui/commandline.c, so start tshark-specific options 1000 after this
- */
 #define LONGOPT_COLOR (65536+1000)
 #define LONGOPT_NO_DUPLICATE_KEYS (65536+1001)
 
