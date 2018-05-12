@@ -1156,32 +1156,8 @@ capture(void)
   g_string_free(str, TRUE);
 
   ret = sync_pipe_start(&global_capture_opts, &global_capture_session, &global_info_data, NULL);
-
   if (!ret)
     return FALSE;
-
-  /* the actual capture loop
-   *
-   * XXX - glib doesn't seem to provide any event based loop handling.
-   *
-   * XXX - for whatever reason,
-   * calling g_main_loop_new() ends up in 100% cpu load.
-   *
-   * But that doesn't matter: in UNIX we can use select() to find an input
-   * source with something to do.
-   *
-   * But that doesn't matter because we're in a CLI (that doesn't need to
-   * update a GUI or something at the same time) so it's OK if we block
-   * trying to read from the pipe.
-   *
-   * So all the stuff in USE_TSHARK_SELECT could be removed unless I'm
-   * wrong (but I leave it there in case I am...).
-   */
-
-#ifdef USE_TSHARK_SELECT
-  FD_ZERO(&readfds);
-  FD_SET(pipe_input.source, &readfds);
-#endif
 
   loop_running = TRUE;
 
@@ -1189,24 +1165,12 @@ capture(void)
   {
     while (loop_running)
     {
-#ifdef USE_TSHARK_SELECT
-      ret = select(pipe_input.source+1, &readfds, NULL, NULL, NULL);
-
-      if (ret == -1)
-      {
-        fprintf(stderr, "%s: %s\n", "select()", g_strerror(errno));
-        return TRUE;
-      } else if (ret == 1) {
-#endif
         printf("input callback(%d,%p)\n", pipe_input.source, pipe_input.user_data);
         /* Call the real handler */
         if (!pipe_input.input_cb(pipe_input.source, pipe_input.user_data)) {
           g_log(NULL, G_LOG_LEVEL_DEBUG, "input pipe closed");
           return FALSE;
         }
-#ifdef USE_TSHARK_SELECT
-      }
-#endif
     }
   }
   CATCH(OutOfMemoryError) {
