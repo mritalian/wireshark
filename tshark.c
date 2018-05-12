@@ -1,12 +1,14 @@
 
 #define HAVE_FCNTL_H 1
 #define HAVE_LIBPCAP 1
-#define HAVE_PCAP_OPEN_DEAD 1
 #define HAVE_PLUGINS 1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_UNISTD_H 1
 #define PCAP_NG_DEFAULT 1
 #define LOG_DOMAIN_CAPTURE "Capture"
+#ifdef HAVE_PCAP_OPEN_DEAD
+#undef HAVE_PCAP_OPEN_DEAD
+#endif
 
 #include "file.h"
 
@@ -197,27 +199,6 @@ string_elem_print(gpointer data, gpointer not_used _U_)
 }
 
 static void
-list_capture_types(void) {
-  int                 i;
-  struct string_elem *captypes;
-  GSList             *list = NULL;
-
-  captypes = g_new(struct string_elem, WTAP_NUM_FILE_TYPES_SUBTYPES);
-
-  fprintf(stderr, "tshark: The available capture file types for the \"-F\" flag are:\n");
-  for (i = 0; i < WTAP_NUM_FILE_TYPES_SUBTYPES; i++) {
-    if (wtap_dump_can_open(i)) {
-      captypes[i].sstr = wtap_file_type_subtype_short_string(i);
-      captypes[i].lstr = wtap_file_type_subtype_string(i);
-      list = g_slist_insert_sorted(list, &captypes[i], string_compare);
-    }
-  }
-  g_slist_foreach(list, string_elem_print, NULL);
-  g_slist_free(list);
-  g_free(captypes);
-}
-
-static void
 list_read_capture_types(void) {
   int                 i;
   struct string_elem *captypes;
@@ -284,17 +265,6 @@ main(int argc, char *argv[])
   GString             *runtime_info_str;
   char                *init_progfile_dir_error;
   int                  opt;
-  static const struct option long_options[] = {
-    {"help", no_argument, NULL, 'h'},
-    {"version", no_argument, NULL, 'v'},
-    LONGOPT_CAPTURE_COMMON
-    LONGOPT_DISSECT_COMMON
-    {"print", no_argument, NULL, 'P'},
-    {"export-objects", required_argument, NULL, LONGOPT_EXPORT_OBJECTS},
-    {"color", no_argument, NULL, LONGOPT_COLOR},
-    {"no-duplicate-keys", no_argument, NULL, LONGOPT_NO_DUPLICATE_KEYS},
-    {0, 0, 0, 0 }
-  };
   gboolean             arg_error = FALSE;
 
   int                  err;
@@ -317,9 +287,6 @@ main(int argc, char *argv[])
   volatile int         in_file_type = WTAP_TYPE_AUTO;
   gchar               *volatile cf_name = NULL;
   gchar               *dfilter = NULL;
-#ifdef HAVE_PCAP_OPEN_DEAD
-  struct bpf_program   fcode;
-#endif
   dfilter_t           *rfcode = NULL;
   dfilter_t           *dfcode = NULL;
   gchar               *err_msg;
@@ -434,7 +401,7 @@ main(int argc, char *argv[])
   opterr = 1;
 
   /* Now get our args */
-  while ((opt = getopt_long(argc, argv, optstring, long_options, NULL)) != -1) {
+  while ((opt = getopt(argc, argv, optstring)) != -1) {
     switch (opt) {
     case 'i':        /* Use interface x */
       exit_status = capture_opts_add_opt(&global_capture_opts, opt, optarg, &start_capture);
@@ -449,14 +416,6 @@ main(int argc, char *argv[])
       cf_name = g_strdup(optarg);
       break;
     default:
-    case '?':        /* Bad flag - print usage message */
-      switch(optopt) {
-      case 'F':
-        list_capture_types();
-        break;
-      default:
-        break;
-      }
       exit_status = INVALID_OPTION;
       goto clean_exit;
       break;
@@ -839,21 +798,6 @@ main(int argc, char *argv[])
       g_free(err_msg);
       epan_cleanup();
       extcap_cleanup();
-#ifdef HAVE_PCAP_OPEN_DEAD
-      {
-        pcap_t *pc;
-
-        pc = pcap_open_dead(DLT_EN10MB, MIN_PACKET_SIZE);
-        if (pc != NULL) {
-          if (pcap_compile(pc, &fcode, dfilter, 0, 0) != -1) {
-            cmdarg_err_cont(
-              "  Note: That display filter code looks like a valid capture filter;\n"
-              "        maybe you mixed them up?");
-          }
-          pcap_close(pc);
-        }
-      }
-#endif
       exit_status = INVALID_FILTER;
       goto clean_exit;
     }
@@ -1415,7 +1359,7 @@ capture_input_new_file(capture_session *cap_session, gchar *new_file)
   capture_options *capture_opts = cap_session->capture_opts;
   capture_file *cf = (capture_file *) cap_session->cf;
   gboolean is_tempfile;
-  int      err;
+  int err;
 
   if (cap_session->state == CAPTURE_PREPARING) {
     g_log(LOG_DOMAIN_CAPTURE, G_LOG_LEVEL_MESSAGE, "Capture started.");
@@ -2234,12 +2178,9 @@ put_spaces_string(char *dest, const char *str, size_t str_len, size_t str_with_s
 static inline void
 put_string_spaces(char *dest, const char *str, size_t str_len, size_t str_with_spaces)
 {
-  size_t i;
-
   memcpy(dest, str, str_len);
-  for (i = str_len; i < str_with_spaces; i++)
+  for (size_t i = str_len; i < str_with_spaces; i++)
     dest[i] = ' ';
-
   dest[str_with_spaces] = '\0';
 }
 
