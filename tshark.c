@@ -1351,15 +1351,6 @@ capture_input_new_packets(capture_session *cap_session, int to_read)
   gboolean      filtering_tap_listeners;
   guint         tap_flags;
 
-#ifdef SIGINFO
-  /*
-   * Prevent a SIGINFO handler from writing to the standard error while
-   * we're doing so or writing to the standard output; instead, have it
-   * just set a flag telling us to print that information when we're done.
-   */
-  infodelay = TRUE;
-#endif /* SIGINFO */
-
   /* Do we have any tap listeners with filters? */
   filtering_tap_listeners = have_filtering_tap_listeners();
 
@@ -1433,19 +1424,6 @@ capture_input_new_packets(capture_session *cap_session, int to_read)
         fflush(stderr);
       }
   }
-
-#ifdef SIGINFO
-  /*
-   * Allow SIGINFO handlers to write.
-   */
-  infodelay = FALSE;
-
-  /*
-   * If a SIGINFO handler asked us to write out capture counts, do so.
-   */
-  if (infoprint)
-    report_counts();
-#endif /* SIGINFO */
 }
 
 static void
@@ -1457,27 +1435,7 @@ report_counts(void)
       fprintf(stderr, "%u packet%s captured\n", packet_count,
             plurality(packet_count, "", "s"));
   }
-#ifdef SIGINFO
-  infoprint = FALSE; /* we just reported it */
-#endif /* SIGINFO */
 }
-
-#ifdef SIGINFO
-static void
-report_counts_siginfo(int signum _U_)
-{
-  int sav_errno = errno;
-  /* If we've been told to delay printing, just set a flag asking
-     that we print counts (if we're supposed to), otherwise print
-     the count of packets captured (if we're supposed to). */
-  if (infodelay)
-    infoprint = TRUE;
-  else
-    report_counts();
-  errno = sav_errno;
-}
-#endif /* SIGINFO */
-
 
 /* capture child detected any packet drops? */
 void
