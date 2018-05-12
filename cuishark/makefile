@@ -2,9 +2,7 @@
 CFLAGS  += -I..
 CFLAGS  += `pkg-config --cflags wireshark`
 CFLAGS  += `pkg-config --cflags glib-2.0`
-
-LDFLAGS += ../ui/libui.a
-
+LDFLAGS += ui/libui.a
 LDFLAGS += `pkg-config --libs wireshark`
 LDFLAGS += `pkg-config --libs glib-2.0`
 LDFLAGS += -lwiretap -lwsutil -lz -lm -lpcap
