@@ -258,8 +258,6 @@ main(int argc, char *argv[])
     g_free(init_progfile_dir_error);
   }
 
-  initialize_funnel_ops();
-
   /* Get the compile-time version information string */
   GString *comp_info_str = get_compiled_version_info(
       get_tshark_compiled_version_info, epan_get_compiled_version_info);
@@ -299,18 +297,6 @@ main(int argc, char *argv[])
     exit_status = INIT_FAILED;
     goto clean_exit;
   }
-
-  register_all_plugin_tap_listeners();
-  extcap_register_preferences();
-  /* Register all tap listeners. */
-  for (tap_reg_t *t = tap_reg_listener; t->cb_func != NULL; t++) {
-    t->cb_func();
-  }
-  conversation_table_set_gui_info(init_iousers);
-  hostlist_table_set_gui_info(init_hostlists);
-  srt_table_iterate_tables(register_srt_tables, NULL);
-  rtd_table_iterate_tables(register_rtd_tables, NULL);
-  stat_tap_iterate_tables(register_simple_stat_tables, NULL);
 
   tshark_debug("tshark reading settings");
   prefs_p = epan_load_settings();
@@ -646,7 +632,6 @@ main(int argc, char *argv[])
 #endif
 
   prefs_apply_all();
-  start_exportobjects();
 
   {
     GSList* it = NULL;
@@ -952,7 +937,6 @@ main(int argc, char *argv[])
   }
 
   draw_tap_listeners(TRUE);
-  funnel_dump_all_text_windows();
   epan_free(cfile.epan);
   epan_cleanup();
   extcap_cleanup();
