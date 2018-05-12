@@ -1,3 +1,5 @@
+*.out
+
 #
 # This file is tracked by git for the wireshark repository, and thus
 # should only contain ignore entries common to all wireshark developers.
