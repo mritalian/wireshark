@@ -166,7 +166,6 @@ static gboolean process_packet_single_pass(capture_file *cf,
     const guchar *pd, guint tap_flags);
 static gboolean write_preamble(capture_file *cf);
 static gboolean print_packet(capture_file *cf, epan_dissect_t *edt);
-static gboolean write_finale(void);
 
 static GHashTable *output_only_tables = NULL;
 
@@ -947,9 +946,6 @@ main(int argc, char *argv[])
     do_dissection = must_do_dissection(rfcode, dfcode, pdu_export_arg);
     capture();
     exit_status = global_capture_session.fork_child_status;
-
-    if (print_packet_info)
-      write_finale();
   }
 
   g_free(cf_name);
@@ -1847,13 +1843,6 @@ process_cap_file(capture_file *cf, char *save_file, int out_file_type,
       cfile_close_failure_message(save_file, err);
       success = FALSE;
     }
-  } else {
-    if (print_packet_info) {
-      if (!write_finale()) {
-        /* show_print_file_io_error(errno); */
-        success = FALSE;
-      }
-    }
   }
 
 out:
@@ -2387,39 +2376,6 @@ print_packet(capture_file *cf, epan_dissect_t *edt)
   return TRUE;
 }
 
-static gboolean
-write_finale(void)
-{
-  switch (output_action) {
-
-  case WRITE_TEXT:
-    return print_finale(print_stream);
-
-  case WRITE_XML:
-    if (print_details)
-      write_pdml_finale(stdout);
-    else
-      write_psml_finale(stdout);
-    return !ferror(stdout);
-
-  case WRITE_FIELDS:
-    write_fields_finale(output_fields, stdout);
-    return !ferror(stdout);
-
-  case WRITE_JSON:
-  case WRITE_JSON_RAW:
-    write_json_finale(stdout);
-    return !ferror(stdout);
-
-  case WRITE_EK:
-    return !ferror(stdout);
-
-  default:
-    g_assert_not_reached();
-    return FALSE;
-  }
-}
-
 void
 cf_close(capture_file *cf)
 {
@@ -2436,18 +2392,13 @@ cf_open(capture_file *cf, const char *fname, unsigned int type, gboolean is_temp
   if (wth == NULL)
     goto fail;
 
-  /* The open succeeded.  Fill in the information for this file. */
-  /* Create new epan session for dissection. */
   epan_free(cf->epan);
   cf->epan = tshark_epan_new(cf);
   cf->provider.wth = wth;
   cf->f_datalen = 0; /* not used, but set it anyway */
 
-  /* Set the file name because we need it to set the follow stream filter.
-     XXX - is that still true?  We need it for other reasons, though,
-     in any case. */
   cf->filename = g_strdup(fname);
-  cf->is_tempfile = is_tempfile; /* Indicate whether it's a permanent or temporary file. */
+  cf->is_tempfile = is_tempfile;
   cf->unsaved_changes = FALSE; /* No user changes yet. */
 
   cf->cd_t      = wtap_file_type_subtype(cf->provider.wth);
@@ -2460,7 +2411,6 @@ cf_open(capture_file *cf, const char *fname, unsigned int type, gboolean is_temp
   cf->provider.ref = NULL;
   cf->provider.prev_dis = NULL;
   cf->provider.prev_cap = NULL;
-
   cf->state = FILE_READ_IN_PROGRESS;
 
   wtap_set_cb_new_ipv4(cf->provider.wth, add_ipv4_name);
