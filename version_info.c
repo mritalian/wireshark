@@ -334,12 +334,7 @@ get_runtime_version_info(void (*additional_info)(GString *))
 
 	/* plugins */
 #ifdef HAVE_PLUGINS
-	if (g_module_supported()) {
-		g_string_append_printf(str, ", binary plugins supported (%d loaded)", plugins_get_count());
-	}
-	else {
-		g_string_append(str, ", binary plugins not supported");
-	}
+	g_string_append(str, ", binary plugins not supported");
 #endif
 
 	g_string_append(str, ".");
