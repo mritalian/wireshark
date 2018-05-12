@@ -175,7 +175,8 @@ init_pipe_args(int *argc) {
 #ifdef _WIN32
     exename = g_strdup_printf("%s\\dumpcap.exe", progfile_dir);
 #else
-    exename = g_strdup_printf("%s/dumpcap", progfile_dir);
+    // exename = g_strdup_printf("/%s/dumpcap", progfile_dir); // XXX before
+    exename = g_strdup_printf("/usr/local/bin/dumpcap");       // XXX after hardcoding
 #endif
 
     /* Make that the first argument in the argument list (argv[0]). */
@@ -231,8 +232,6 @@ sync_pipe_start(capture_options *capture_opts, capture_session *cap_session, inf
     enum PIPES { PIPE_READ, PIPE_WRITE };   /* Constants 0 and 1 for PIPE_READ and PIPE_WRITE */
 #endif
     int sync_pipe_read_fd;
-    int argc;
-    char **argv;
     int i;
     guint j;
     interface_options *interface_opts;
@@ -249,7 +248,8 @@ sync_pipe_start(capture_options *capture_opts, capture_session *cap_session, inf
         return FALSE;
     }
 
-    argv = init_pipe_args(&argc);
+    int argc;
+    char **argv = init_pipe_args(&argc);
     if (!argv) {
         /* We don't know where to find dumpcap. */
         report_failure("We don't know where to find dumpcap.");
@@ -439,9 +439,11 @@ sync_pipe_start(capture_options *capture_opts, capture_session *cap_session, inf
          */
         dup2(sync_pipe[PIPE_WRITE], 2);
         ws_close(sync_pipe[PIPE_READ]);
-        strcpy(argv[0], "/home/vagrant/git/wireshark/dumpcap");
-        printf("before execv argv[0]:%s \n", argv[0]);
-        /* exit(1); */
+        printf("---------\n");
+        for (size_t ff=0; argv[ff]; ff++) {
+          printf(" argv[%zd]: %s\n", ff, argv[ff]);
+        }
+        printf("---------\n");
         execv(argv[0], argv);
         g_snprintf(errmsg, sizeof errmsg, "Couldn't run %s in child process: %s",
                    argv[0], g_strerror(errno));
