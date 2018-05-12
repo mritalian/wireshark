@@ -37,7 +37,6 @@ SRC = \
 	cli/tap-stats_tree.c       \
 	cli/tap-sv.c               \
 	cli/tap-wspstat.c          \
-	cli/tshark-tap-register.c  \
 	alert_box.c              \
 	capture.c                \
 	capture_ui_utils.c       \

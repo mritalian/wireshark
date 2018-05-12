@@ -113,7 +113,7 @@
 
 #include "text_import.h"
 #include "text_import_scanner.h"
-#include "text_import_scanner_lex.h"
+/* #include "text_import_scanner_lex.h" */
 
 /*--- Options --------------------------------------------------------------------*/
 
