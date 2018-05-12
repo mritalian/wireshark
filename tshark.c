@@ -229,9 +229,6 @@ main(int argc, char *argv[])
   const char          *volatile exp_pdu_filename = NULL;
   exp_pdu_t            exp_pdu_tap_data;
 
-#define OPTSTRING "+2" OPTSTRING_CAPTURE_COMMON OPTSTRING_DISSECT_COMMON "M:C:e:E:F:gG:hH:j:J:lo:O:PqQr:R:S:T:U:vVw:W:xX:Y:z:"
-
-  static const char    optstring[] = OPTSTRING;
 
   tshark_debug("tshark started with %d args", argc);
 
@@ -326,8 +323,7 @@ main(int argc, char *argv[])
   optind = 0;
   opterr = 1;
 
-  /* Now get our args */
-  while ((opt = getopt(argc, argv, optstring)) != -1) {
+  while ((opt = getopt(argc, argv, "i:r:Y:")) != -1) {
     switch (opt) {
     case 'i':        /* Use interface x */
       exit_status = capture_opts_add_opt(&global_capture_opts, opt, optarg, &start_capture);
