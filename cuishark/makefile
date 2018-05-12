@@ -1,5 +1,5 @@
 
-CFLAGS  += -I..
+CFLAGS  += -I.
 CFLAGS  += `pkg-config --cflags wireshark`
 CFLAGS  += `pkg-config --cflags glib-2.0`
 LDFLAGS += ui/libui.a

@@ -36,7 +36,7 @@
 #include <wsutil/report_message.h>
 #include <version_info.h>
 #include <wiretap/wtap_opttypes.h>
-#include <wiretap/pcapng.h>
+/* #include <wiretap/pcapng.h> */
 
 #include <epan/timestamp.h>
 
@@ -759,15 +759,6 @@ main(int argc, char *argv[])
           goto clean_exit;
       }
 
-      exp_pdu_error = exp_pdu_pre_open(exp_pdu_tap_name, exp_pdu_filter,
-          &exp_pdu_tap_data);
-      if (exp_pdu_error) {
-          cmdarg_err("Cannot register tap: %s", exp_pdu_error);
-          g_free(exp_pdu_error);
-          exit_status = INVALID_TAP;
-          goto clean_exit;
-      }
-
       exp_fd = ws_open(exp_pdu_filename, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644);
       if (exp_fd == -1) {
           cmdarg_err("%s: %s", exp_pdu_filename, file_open_error_message(errno, TRUE));
@@ -777,14 +768,6 @@ main(int argc, char *argv[])
 
       /* Activate the export PDU tap */
       comment = g_strdup_printf("Dump of PDUs from %s", cf_name);
-      err = exp_pdu_open(&exp_pdu_tap_data, exp_fd, comment);
-      if (err != 0) {
-          cfile_dump_open_failure_message("TShark", exp_pdu_filename, err,
-                                          WTAP_FILE_TYPE_SUBTYPE_PCAPNG);
-          g_free(comment);
-          exit_status = INVALID_EXPORT;
-          goto clean_exit;
-      }
   }
 
   tshark_debug("tshark: do_dissection = %s", do_dissection ? "TRUE" : "FALSE");
@@ -844,11 +827,6 @@ main(int argc, char *argv[])
     }
 
     if (pdu_export_arg) {
-        err = exp_pdu_close(&exp_pdu_tap_data);
-        if (err) {
-            cfile_close_failure_message(exp_pdu_filename, err);
-            exit_status = 2;
-        }
         g_free(pdu_export_arg);
     }
   } else {

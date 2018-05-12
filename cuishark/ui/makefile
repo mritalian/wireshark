@@ -1,16 +1,18 @@
 
 CFLAGS  += -I../
-CFLAGS  += -I../../
+CFLAGS  += `pkg-config --cflags wireshark`
+LDFLAGS += `pkg-config --libs wireshark`
 CFLAGS  += `pkg-config --cflags glib-2.0`
 LDFLAGS += `pkg-config --libs glib-2.0`
 
+
 SRC = \
+	cli/tap-exportobject.c     \
 	cli/tap-camelsrt.c         \
 	cli/tap-comparestat.c      \
 	cli/tap-diameter-avp.c     \
 	cli/tap-endpoints.c        \
 	cli/tap-expert.c           \
-	cli/tap-exportobject.c     \
 	cli/tap-flow.c             \
 	cli/tap-follow.c           \
 	cli/tap-funnel.c           \
@@ -45,7 +47,6 @@ SRC = \
 	decode_as_utils.c        \
 	dissect_opts.c           \
 	export_object_ui.c       \
-	export_pdu_ui_utils.c    \
 	failure_message.c        \
 	file_dialog.c            \
 	filter_files.c           \
@@ -69,19 +70,19 @@ SRC = \
 	service_response_time.c  \
 	software_update.c        \
 	ssl_key_export.c         \
-	summary.c                \
 	tap-iax2-analysis.c      \
 	tap-rlc-graph.c          \
 	tap-rtp-common.c         \
 	tap-sctp-analysis.c      \
 	tap-tcp-stream.c         \
-	tap_export_pdu.c         \
 	text_import.c            \
 	text_import_scanner.c    \
 	time_shift.c             \
 	traffic_table_ui.c       \
 	util.c                   \
-	voip_calls.c
+	export_pdu_ui_utils.c    \
+	summary.c                \
+	tap_export_pdu.c
 OBJ = $(SRC:.c=.o)
 
 all: $(OBJ)
