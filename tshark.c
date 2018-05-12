@@ -164,17 +164,9 @@ static gboolean process_cap_file(capture_file *, char *, int, gboolean, int, gin
 static gboolean process_packet_single_pass(capture_file *cf,
     epan_dissect_t *edt, gint64 offset, wtap_rec *rec,
     const guchar *pd, guint tap_flags);
-static void show_print_file_io_error(int err);
 static gboolean write_preamble(capture_file *cf);
 static gboolean print_packet(capture_file *cf, epan_dissect_t *edt);
 static gboolean write_finale(void);
-
-static void failure_warning_message(const char *msg_format, va_list ap);
-static void open_failure_message(const char *filename, int err,
-    gboolean for_writing);
-static void read_failure_message(const char *filename, int err);
-static void write_failure_message(const char *filename, int err);
-static void failure_message_cont(const char *msg_format, va_list ap);
 
 static GHashTable *output_only_tables = NULL;
 
@@ -183,72 +175,13 @@ struct string_elem {
   const char *lstr;   /* The long string */
 };
 
-static gint
-string_compare(gconstpointer a, gconstpointer b)
-{
-  return strcmp(((const struct string_elem *)a)->sstr,
-                ((const struct string_elem *)b)->sstr);
-}
-
-static void
-string_elem_print(gpointer data, gpointer not_used _U_)
-{
-  fprintf(stderr, "    %s - %s\n",
-          ((struct string_elem *)data)->sstr,
-          ((struct string_elem *)data)->lstr);
-}
-
-static void
-list_read_capture_types(void) {
-  int                 i;
-  struct string_elem *captypes;
-  GSList             *list = NULL;
-  const char *magic = "Magic-value-based";
-  const char *heuristic = "Heuristics-based";
-
-  /* this is a hack, but WTAP_NUM_FILE_TYPES_SUBTYPES is always >= number of open routines so we're safe */
-  captypes = g_new(struct string_elem, WTAP_NUM_FILE_TYPES_SUBTYPES);
-
-  fprintf(stderr, "tshark: The available read file types for the \"-X read_format:\" option are:\n");
-  for (i = 0; open_routines[i].name != NULL; i++) {
-    captypes[i].sstr = open_routines[i].name;
-    captypes[i].lstr = (open_routines[i].type == OPEN_INFO_MAGIC) ? magic : heuristic;
-    list = g_slist_insert_sorted(list, &captypes[i], string_compare);
-  }
-  g_slist_foreach(list, string_elem_print, NULL);
-  g_slist_free(list);
-  g_free(captypes);
-}
-
-static void
-print_current_user(void) {
-  gchar *cur_user, *cur_group;
-
-  if (started_with_special_privs()) {
-    cur_user = get_cur_username();
-    cur_group = get_cur_groupname();
-    fprintf(stderr, "Running as user \"%s\" and group \"%s\".",
-      cur_user, cur_group);
-    g_free(cur_user);
-    g_free(cur_group);
-    if (running_with_special_privs()) {
-      fprintf(stderr, " This could be dangerous.");
-    }
-    fprintf(stderr, "\n");
-  }
-}
-
 static void
 get_tshark_compiled_version_info(GString *str)
-{
-  get_compiled_caplibs_version(str);
-}
+{ get_compiled_caplibs_version(str); }
 
 static void
 get_tshark_runtime_version_info(GString *str)
-{
-  epan_get_runtime_version_info(str);
-}
+{ epan_get_runtime_version_info(str); }
 
 
 static gboolean
@@ -306,8 +239,6 @@ main(int argc, char *argv[])
   /* Set the C-language locale to the native environment. */
   setlocale(LC_ALL, "");
 
-  cmdarg_err_init(failure_warning_message, failure_message_cont);
-
   /*
    * Get credential information for later use, and drop privileges
    * before doing anything else.
@@ -315,7 +246,7 @@ main(int argc, char *argv[])
    */
   init_process_policies();
   relinquish_special_privs_perm();
-  print_current_user();
+  /* print_current_user(); */
 
   /*
    * Attempt to get the pathname of the directory containing the
@@ -356,10 +287,6 @@ main(int argc, char *argv[])
   print_details = TRUE;
   print_packet_info = TRUE;
   print_hex = TRUE;
-
-  init_report_message(failure_warning_message, failure_warning_message,
-                      open_failure_message, read_failure_message,
-                      write_failure_message);
 
 #ifdef HAVE_LIBPCAP
   capture_opts_init(&global_capture_opts);
@@ -764,7 +691,7 @@ main(int argc, char *argv[])
     in_file_type = open_info_name_to_type(name);
     if (in_file_type == WTAP_TYPE_AUTO) {
       cmdarg_err("\"%s\" isn't a valid read file format type", name? name : "");
-      list_read_capture_types();
+      /* list_read_capture_types(); */
       exit_status = INVALID_OPTION;
       goto clean_exit;
     }
@@ -1009,7 +936,7 @@ main(int argc, char *argv[])
 
     if (print_packet_info) {
       if (!write_preamble(&cfile)) {
-        show_print_file_io_error(errno);
+        /* show_print_file_io_error(errno); */
         exit_status = INVALID_FILE;
         goto clean_exit;
       }
@@ -1021,11 +948,8 @@ main(int argc, char *argv[])
     capture();
     exit_status = global_capture_session.fork_child_status;
 
-    if (print_packet_info) {
-      if (!write_finale()) {
-        show_print_file_io_error(errno);
-      }
-    }
+    if (print_packet_info)
+      write_finale();
   }
 
   g_free(cf_name);
@@ -1058,7 +982,6 @@ clean_exit:
 }
 
 /*#define USE_BROKEN_G_MAIN_LOOP*/
-
 #ifdef USE_BROKEN_G_MAIN_LOOP
   GMainLoop *loop;
 #else
@@ -1452,18 +1375,12 @@ capture_input_new_packets(capture_session *cap_session, int to_read)
      * We do if:
      *
      *    we're going to apply a read filter;
-     *
      *    we're going to apply a display filter;
-     *
      *    we're going to print the protocol tree;
-     *
      *    one of the tap listeners is going to apply a filter;
-     *
      *    one of the tap listeners requires a protocol tree;
-     *
      *    a postdissector wants field values or protocols
      *    on the first pass;
-     *
      *    we have custom columns (which require field values, which
      *    currently requires that we build a protocol tree).
      */
@@ -1704,7 +1621,7 @@ process_cap_file(capture_file *cf, char *save_file, int out_file_type,
     /* Set up to print packet information. */
     if (print_packet_info) {
       if (!write_preamble(cf)) {
-        show_print_file_io_error(errno);
+        /* show_print_file_io_error(errno); */
         success = FALSE;
         goto out;
       }
@@ -1975,7 +1892,7 @@ process_cap_file(capture_file *cf, char *save_file, int out_file_type,
   } else {
     if (print_packet_info) {
       if (!write_finale()) {
-        show_print_file_io_error(errno);
+        /* show_print_file_io_error(errno); */
         success = FALSE;
       }
     }
@@ -2082,7 +1999,7 @@ process_packet_single_pass(capture_file *cf, epan_dissect_t *edt, gint64 offset,
         fflush(stdout);
 
       if (ferror(stdout)) {
-        show_print_file_io_error(errno);
+        /* show_print_file_io_error(errno); */
         exit(2);
       }
     }
@@ -2562,11 +2479,9 @@ cf_open(capture_file *cf, const char *fname, unsigned int type, gboolean is_temp
     goto fail;
 
   /* The open succeeded.  Fill in the information for this file. */
-
   /* Create new epan session for dissection. */
   epan_free(cf->epan);
   cf->epan = tshark_epan_new(cf);
-
   cf->provider.wth = wth;
   cf->f_datalen = 0; /* not used, but set it anyway */
 
@@ -2574,12 +2489,8 @@ cf_open(capture_file *cf, const char *fname, unsigned int type, gboolean is_temp
      XXX - is that still true?  We need it for other reasons, though,
      in any case. */
   cf->filename = g_strdup(fname);
-
-  /* Indicate whether it's a permanent or temporary file. */
-  cf->is_tempfile = is_tempfile;
-
-  /* No user changes yet. */
-  cf->unsaved_changes = FALSE;
+  cf->is_tempfile = is_tempfile; /* Indicate whether it's a permanent or temporary file. */
+  cf->unsaved_changes = FALSE; /* No user changes yet. */
 
   cf->cd_t      = wtap_file_type_subtype(cf->provider.wth);
   cf->open_type = type;
@@ -2604,73 +2515,6 @@ fail:
   return CF_ERROR;
 }
 
-static void
-show_print_file_io_error(int err)
-{
-  switch (err) {
-
-  case ENOSPC:
-    cmdarg_err("Not all the packets could be printed because there is "
-"no space left on the file system.");
-    break;
-
-#ifdef EDQUOT
-  case EDQUOT:
-    cmdarg_err("Not all the packets could be printed because you are "
-"too close to, or over your disk quota.");
-  break;
-#endif
-
-  default:
-    cmdarg_err("An error occurred while printing packets: %s.",
-      g_strerror(err));
-    break;
-  }
-}
-
-/*
- * General errors and warnings are reported with an console message
- * in TShark.
- */
-static void
-failure_warning_message(const char *msg_format, va_list ap)
-{
-  fprintf(stderr, "tshark: ");
-  vfprintf(stderr, msg_format, ap);
-  fprintf(stderr, "\n");
-}
-
-/*
- * Open/create errors are reported with an console message in TShark.
- */
-static void
-open_failure_message(const char *filename, int err, gboolean for_writing)
-{
-  fprintf(stderr, "tshark: ");
-  fprintf(stderr, file_open_error_message(err, for_writing), filename);
-  fprintf(stderr, "\n");
-}
-
-/*
- * Read errors are reported with an console message in TShark.
- */
-static void
-read_failure_message(const char *filename, int err)
-{
-  cmdarg_err("An error occurred while reading from the file \"%s\": %s.",
-             filename, g_strerror(err));
-}
-
-/*
- * Write errors are reported with an console message in TShark.
- */
-static void
-write_failure_message(const char *filename, int err)
-{
-  cmdarg_err("An error occurred while writing to the file \"%s\": %s.",
-             filename, g_strerror(err));
-}
-
 static void reset_epan_mem(capture_file *cf,epan_dissect_t *edt, gboolean tree, gboolean visual)
 {
   if (!epan_auto_reset || (cf->count < epan_auto_reset_count))
@@ -2684,15 +2528,5 @@ static void reset_epan_mem(capture_file *cf,epan_dissect_t *edt, gboolean tree, 
   cf->epan = tshark_epan_new(cf);
   epan_dissect_init(edt, cf->epan, tree, visual);
   cf->count = 0;
-}
-
-/*
- * Report additional information for an error in command-line arguments.
- */
-static void
-failure_message_cont(const char *msg_format, va_list ap)
-{
-  vfprintf(stderr, msg_format, ap);
-  fprintf(stderr, "\n");
 }
 
