@@ -1,13 +1,29 @@
 
 # Shape-up tshark repository
 
+MacOS's required package
 ```
-$ git clone <repo> && cd <repo>
+$ brew install libgcrypt GLib
+```
+
+Ubuntu's required package
+```
 $ sudo apt install \
   autoconf build-essential libtool    \
   libtool libtool-bin libgcrypt-dev   \
   bison flex libgtk-3-dev  libqt4-dev \
   libpcap-dev
+
+or
+
+$ sudo apt install \
+  autoconf build-essential libtool    \
+  libtool libtool-bin libgcrypt-dev   \
+  bison flex libpcap-dev
+```
+
+```
+$ git clone <repo> && cd <repo>
 $ ./autogen.sh
 $ ./configure  \
   --enable-wireshark=false  \
@@ -26,6 +42,5 @@ $ ./configure  \
 	--disable-guides
 $ make
 $ sudo make install
-$ sudo .lib/tshark -i lo -Y "tcp.port == 80
 ```
 
