@@ -22,6 +22,8 @@ $ sudo apt install \
   bison flex libpcap-dev
 ```
 
+build and install libwireshark suite
+
 ```
 $ git clone <repo> && cd <repo>
 $ ./autogen.sh
