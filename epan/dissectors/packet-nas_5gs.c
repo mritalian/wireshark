@@ -61,14 +61,14 @@ static expert_field ei_nas_5gs_msg_not_dis = EI_INIT;
 static expert_field ei_nas_5gs_ie_not_dis = EI_INIT;
 static expert_field ei_nas_eps_missing_mandatory_elemen = EI_INIT;
 
-static const value_string nas_5gs_security_header_type_vals[] = {
+/*static const value_string nas_5gs_security_header_type_vals[] = {
     { 0,    "Plain NAS message, not security protected"},
     { 1,    "Integrity protected"},
     { 2,    "Integrity protected and ciphered"},
     { 3,    "Integrity protected with new 5GS security context"},
     { 4,    "Integrity protected and ciphered with new 5GS security context"},
     { 0,    NULL }
-};
+};*/
 
 #define TGPP_PD_5GMM 0x0e
 #define TGPP_PD_5GSM 0x1e
@@ -242,7 +242,7 @@ de_nas_5gs_mm_5gs_reg_res(tvbuff_t *tvb, proto_tree *tree, packet_info *pinfo,
 /*
  * 9.8.3.6    5GS registration type
  */
-static const value_string nas_5gs_registration_type_values[] = {
+/*static const value_string nas_5gs_registration_type_values[] = {
     { 0x1, "initial registration" },
     { 0x2, "mobility registration updating" },
     { 0x3, "periodic registration updating" },
@@ -251,7 +251,7 @@ static const value_string nas_5gs_registration_type_values[] = {
     { 0x6, "5GS emergency registration" },
     { 0x7, "reserved" },
     { 0, NULL }
- };
+ };*/
 
 static true_false_string nas_5gs_for_tfs = {
     "Follow-on request pending",
